@@ -49,15 +49,39 @@ class CurrentWeather {
         return _currentTemp
     }
 
-    func downloadWeatherDetails(completed: DownloadComplete)  {
+    func downloadWeatherDetails(completed: @escaping DownloadComplete)  {
         // Alamofire Download
         let currentWeatherURL = URL(string: CURRENT_WEATHER_URL)
         Alamofire.request(currentWeatherURL!).responseJSON {
             response in
                 let result = response.result
-            print(response)
 
+            if let dict = result.value as? Dictionary <String, AnyObject> {
+
+                if let name = dict["name"] as? String {
+
+                    self._cityName = name.capitalized
+
+                } // name
+
+                if let weather = dict["weather"] as? [Dictionary<String, AnyObject>] {
+
+                    if let main = weather[0]["main"] as? String {
+                        self._weatherType = main.capitalized
+
+                    } // weather
+                }
+
+                if let main = dict["main"] as? Dictionary<String, AnyObject> {
+
+                    if let currentTemperature = main["temp"] as? Double {
+                        let kelvinToCelcius = currentTemperature - 273.15
+                        let roundedCelsius = Double(round(1000*kelvinToCelcius)/1000)
+                        self._currentTemp = roundedCelsius
+                    } // main
+                }
+            }
+            completed()
         }
-        completed()
     }
 }
